@@ -47,4 +47,20 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- Sem spring-boot-starter-parent, o super POM do Maven usaria
+                     maven-compiler-plugin 3.1 (source/target 5). Gerenciar a
+                     versão aqui garante que maven.compiler.release=21 seja
+                     respeitado em todos os módulos filhos. -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>

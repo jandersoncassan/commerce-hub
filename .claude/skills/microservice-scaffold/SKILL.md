@@ -57,9 +57,12 @@ porta conforme a tabela abaixo, e o serviço precisa constar em
 
 O `pom.xml` raiz é `packaging=pom` com `dependencyManagement` via BOM
 import — **não** usa `spring-boot-starter-parent`. Por isso o filho
-precisa declarar explicitamente `maven.compiler.release` e o
-`spring-boot-maven-plugin` (senão `mvn package` não gera o jar
-executável que o `Dockerfile` espera).
+precisa declarar explicitamente `maven.compiler.release` (a versão do
+`maven-compiler-plugin` já é gerenciada no `pluginManagement` do pom
+raiz) e o `spring-boot-maven-plugin` **com a execução `repackage`
+vinculada** — sem essa `<executions>`, o plugin fica no classpath mas
+não roda, e o jar gerado não tem manifesto executável (o `Dockerfile`
+falharia com "no main manifest attribute").
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -119,6 +122,13 @@ executável que o `Dockerfile` espera).
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
         <version>${spring-boot.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
