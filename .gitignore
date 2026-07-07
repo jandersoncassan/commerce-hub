@@ -1,0 +1,41 @@
+# ---- Maven / Java ----
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+*.war
+*.ear
+*.log
+hs_err_pid*
+replay_pid*
+dependency-reduced-pom.xml
+.flattened-pom.xml
+
+# ---- IntelliJ IDEA ----
+# .idea/ is partially tracked (misc.xml, vcs.xml, jarRepositories.xml) for
+# shared project settings; personal/local state stays ignored via
+# .idea/.gitignore plus the extras below.
+*.iml
+*.ipr
+*.iws
+out/
+.idea/shelf/
+.idea/httpRequests/
+.idea/dataSources/
+.idea/dataSources.local.xml
+
+# ---- Angular / Node (futuro frontend) ----
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+coverage/
+out-tsc/
+.env
+.env.*
+
+# ---- SO ----
+.DS_Store
+Thumbs.db
