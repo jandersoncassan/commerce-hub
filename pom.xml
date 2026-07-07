@@ -10,17 +10,14 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <!-- Só entram aqui os módulos que já existem no repositório. Ao
+         criar um novo serviço (skill microservice-scaffold), adicione
+         a linha correspondente. Os demais serviços planejados são:
+         api-gateway, auth-service, catalog-service, inventory-service,
+         customer-service, cart-service, order-service, payment-service,
+         notification-service. -->
     <modules>
         <module>discovery-service</module>
-        <module>api-gateway</module>
-        <module>auth-service</module>
-        <module>catalog-service</module>
-        <module>inventory-service</module>
-        <module>customer-service</module>
-        <module>cart-service</module>
-        <module>order-service</module>
-        <module>payment-service</module>
-        <module>notification-service</module>
     </modules>
 
     <properties>
