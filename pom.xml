@@ -18,6 +18,7 @@
          notification-service. -->
     <modules>
         <module>discovery-service</module>
+        <module>api-gateway</module>
     </modules>
 
     <properties>
