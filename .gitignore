@@ -39,3 +39,6 @@ out-tsc/
 # ---- SO ----
 .DS_Store
 Thumbs.db
+
+# ---- Claude Code hooks ----
+.claude/.tests-passed
