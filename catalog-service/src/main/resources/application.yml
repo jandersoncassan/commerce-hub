@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: catalog-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/commercedb}
+    username: ${DB_USER:commerce}
+    password: ${DB_PASS:commerce123}
+  jpa:
+    properties:
+      hibernate:
+        default_schema: catalog
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    schemas: catalog
+    locations: classpath:db/migration
+
+server:
+  port: 8082
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
