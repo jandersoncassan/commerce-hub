@@ -59,6 +59,17 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.13.0</version>
                 </plugin>
+                <!-- Sem spring-boot-starter-parent, o super POM do Maven usaria
+                     maven-surefire-plugin 2.12.4, que não reconhece o JUnit
+                     Platform (JUnit 5) — os testes compilam mas nenhum é
+                     executado ("Tests run: 0"), silenciosamente. Gerenciar a
+                     versão aqui garante que os testes de todos os módulos
+                     filhos realmente rodem. -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.2.5</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
