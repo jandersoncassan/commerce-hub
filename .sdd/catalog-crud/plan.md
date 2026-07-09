@@ -86,11 +86,16 @@ V3__create_idempotency_keys.sql
   DEFAULT 0`.
 - `idempotency_keys`: `idempotency_key UUID PK` (o valor do header),
   `http_method VARCHAR(10) NOT NULL`, `resource_type VARCHAR(50) NOT
-  NULL` (`PRODUCT`/`CATEGORY`), `resource_id UUID NOT NULL`,
-  `response_status SMALLINT NOT NULL`, `created_at TIMESTAMPTZ NOT
+  NULL` (`PRODUCT`/`CATEGORY`), `resource_id UUID` (**nullable**),
+  `response_status SMALLINT` (**nullable**), `created_at TIMESTAMPTZ NOT
   NULL`, `expires_at TIMESTAMPTZ NOT NULL` (= `created_at` + 24h,
   calculado na aplicação). Índice em `expires_at` para suportar limpeza
   futura (job de limpeza é observação, não requisito desta fase).
+  `resource_id`/`response_status` são nullable porque o fluxo
+  grava-primeiro da seção 8 faz o `INSERT` da linha *antes* de conhecer
+  esses valores — eles só existem depois que o recurso é efetivamente
+  criado, preenchidos por um `UPDATE` posterior. `NOT NULL` neles
+  tornaria o próprio `INSERT` inicial impossível.
 
 Todos os tipos batem com as convenções globais: `UUID`, `NUMERIC(10,2)`
 ⇄ `BigDecimal`, `TIMESTAMPTZ` ⇄ `OffsetDateTime`.

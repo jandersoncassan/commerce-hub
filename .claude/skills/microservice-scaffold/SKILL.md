@@ -64,6 +64,16 @@ vinculada** — sem essa `<executions>`, o plugin fica no classpath mas
 não roda, e o jar gerado não tem manifesto executável (o `Dockerfile`
 falharia com "no main manifest attribute").
 
+O `pluginManagement` do pom raiz também já fixa a versão do
+`maven-surefire-plugin` (3.2.5) — sem `spring-boot-starter-parent`, o
+padrão herdado do super POM do Maven seria a 2.12.4, que não reconhece
+o JUnit Platform (JUnit 5): os testes compilam mas o Surefire roda
+silenciosamente zero deles ("Tests run: 0") em vez de falhar. Nada a
+declarar no pom filho para isso — é só saber que o comportamento correto
+depende do raiz estar íntegro; se algum dia o pom raiz for reescrito sem
+essa entrada, todo teste de todo serviço passa a rodar 0 casos sem
+aviso.
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
