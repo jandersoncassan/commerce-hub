@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="api-gateway" />
         <module name="discovery-service" />
+        <module name="catalog-service" />
       </profile>
     </annotationProcessing>
   </component>
