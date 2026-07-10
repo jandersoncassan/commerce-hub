@@ -67,6 +67,16 @@ Exemplo: `br.com.commercehub.catalog`
     └── messaging/    ← publishers/consumers de eventos (quando aplicável)
 ```
 
+## Idioma
+
+- **Código** (classes, métodos, variáveis, pacotes): INGLÊS.
+  Ex.: `Product`, `CreateProductUseCase`, `ProductNotFoundException`.
+  Vale também para nomes de método de teste — método é código, sem exceção.
+- **Documentação** (ADRs, specs SDD, CLAUDE.md, comentários, mensagens de
+  commit): português brasileiro, preservando termos técnicos.
+  Comentários e javadoc explicam o *porquê* em português, sobre um código
+  cujos identificadores estão em inglês.
+
 ## Portas por serviço
 
 | Serviço               | Porta |
