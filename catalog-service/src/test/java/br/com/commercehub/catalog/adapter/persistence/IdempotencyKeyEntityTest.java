@@ -33,11 +33,11 @@ class IdempotencyKeyEntityTest {
     private TestEntityManager entityManager;
 
     @Test
-    void deveGravarELerUmaLinha() {
+    void writesAndReadsARow() {
         UUID key = UUID.randomUUID();
-        OffsetDateTime agora = OffsetDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         IdempotencyKeyEntity entity = new IdempotencyKeyEntity(
-            key, "POST", "PRODUCT", null, null, agora, agora.plusHours(24)
+            key, "POST", "PRODUCT", null, null, now, now.plusHours(24)
         );
 
         entityManager.persistAndFlush(entity);

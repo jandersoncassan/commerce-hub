@@ -53,17 +53,17 @@ eureka:
 ```
 catalog-service/src/main/java/br/com/commercehub/catalog/
 ├── domain/
-│   ├── model/       Produto, Categoria (records)
-│   └── exception/   ProdutoNaoEncontradoException, CategoriaNaoEncontradaException,
-│                     PrecoInvalidoException, CategoriaInexistenteException,
-│                     CategoriaComProdutosAtivosException
+│   ├── model/       Product, Category (records)
+│   └── exception/   ProductNotFoundException, CategoryNotFoundException,
+│                     InvalidPriceException, InvalidCategoryException,
+│                     CategoryHasActiveProductsException
 ├── application/
-│   ├── port/        ProdutoRepository, CategoriaRepository, IdempotencyKeyStore
+│   ├── port/        ProductRepository, CategoryRepository, IdempotencyKeyStore
 │   └── usecase/      um usecase por operação (ver seção 7)
 └── adapter/
-    ├── persistence/  ProdutoEntity, CategoriaEntity, IdempotencyKeyEntity,
+    ├── persistence/  ProductEntity, CategoryEntity, IdempotencyKeyEntity,
     │                 repositórios Spring Data + implementação dos ports
-    └── web/          ProdutoController, CategoriaController, DTOs (records),
+    └── web/          ProductController, CategoryController, DTOs (records),
                        GlobalExceptionHandler (@RestControllerAdvice)
 ```
 Sem `adapter/messaging/` nesta fase (sem eventos — fora do escopo).
@@ -101,12 +101,12 @@ Todos os tipos batem com as convenções globais: `UUID`, `NUMERIC(10,2)`
 ⇄ `BigDecimal`, `TIMESTAMPTZ` ⇄ `OffsetDateTime`.
 
 ## 5. Entidades JPA (`adapter/persistence/`)
-- `ProdutoEntity` (`@Table("products")`): campos batem com `V2`;
+- `ProductEntity` (`@Table("products")`): campos batem com `V2`;
   `@ManyToOne(fetch = LAZY) @JoinColumn(name = "category_id")` para
-  `CategoriaEntity` — permitido porque é o mesmo schema/serviço (ADR
+  `CategoryEntity` — permitido porque é o mesmo schema/serviço (ADR
   004); `@Version private long version` (Hibernate gerencia o
   incremento e a checagem de conflito automaticamente).
-- `CategoriaEntity` (`@Table("categories")`): mesmo padrão, com
+- `CategoryEntity` (`@Table("categories")`): mesmo padrão, com
   `@Version`.
 - `IdempotencyKeyEntity` (`@Table("idempotency_keys")`).
 - Todas com `toDomain()`/`fromDomain()` — nunca expostas na API (padrão
@@ -114,14 +114,14 @@ Todos os tipos batem com as convenções globais: `UUID`, `NUMERIC(10,2)`
 
 ## 6. Domain models (`domain/model/` — sem JPA)
 ```java
-public record Produto(
-    UUID id, String nome, String descricao, BigDecimal preco,
-    UUID categoriaId, boolean ativo,
+public record Product(
+    UUID id, String name, String description, BigDecimal price,
+    UUID categoryId, boolean active,
     OffsetDateTime createdAt, OffsetDateTime updatedAt, long version
 ) {}
 
-public record Categoria(
-    UUID id, String nome,
+public record Category(
+    UUID id, String name,
     OffsetDateTime createdAt, OffsetDateTime updatedAt, long version
 ) {}
 ```
@@ -129,15 +129,15 @@ public record Categoria(
 ## 7. Usecases (`application/usecase/`) — regra de negócio por operação
 | Usecase | Regra |
 |---|---|
-| `CriarProdutoUseCase` | valida `preco >= 0` (senão `PrecoInvalidoException`→422); valida `categoriaId` existente (senão `CategoriaInexistenteException`→422); checa `Idempotency-Key` via `IdempotencyKeyStore` antes de processar, com três desfechos: chave nova ou expirada reivindicada → cria e retorna 201; chave já resolvida → devolve o recurso existente com 200; chave em voo (`resource_id` ainda nulo) → `RequisicaoDuplicadaEmAndamentoException`→409 |
-| `AtualizarProdutoUseCase` (PUT) | mesmas validações de criação; o `version` recebido no request precisa efetivamente participar da checagem de conflito (ver nota abaixo) — Hibernate compara com o valor atual da coluna no `UPDATE` e lança `OptimisticLockException` se divergir |
-| `DesativarProdutoUseCase` (DELETE) | busca por id (404 se não existir); se já `ativo=false`, no-op idempotente (204); senão seta `ativo=false` e `updatedAt=now` |
-| `BuscarProdutoUseCase` (GET detail) | 404 se não existir OU `ativo=false` |
-| `ListarProdutosUseCase` (GET list) | `Pageable`, filtra `ativo=true`, sort padrão `createdAt DESC` |
-| `CriarCategoriaUseCase` | mesma checagem de `Idempotency-Key` que produto |
-| `AtualizarCategoriaUseCase` (PUT) | mesmo padrão de optimistic locking (ver nota abaixo) |
-| `DeletarCategoriaUseCase` (DELETE) | 404 se não existir; conta produtos **ativos** com aquele `categoriaId` — se `> 0`, `CategoriaComProdutosAtivosException`→422; senão delete físico (204) |
-| `BuscarCategoriaUseCase` / `ListarCategoriasUseCase` | GET detail (404) / GET list paginado, sort `createdAt DESC` |
+| `CreateProductUseCase` | valida `price >= 0` (senão `InvalidPriceException`→422); valida `categoryId` existente (senão `InvalidCategoryException`→422); checa `Idempotency-Key` via `IdempotencyKeyStore` antes de processar, com três desfechos: chave nova ou expirada reivindicada → cria e retorna 201; chave já resolvida → devolve o recurso existente com 200; chave em voo (`resource_id` ainda nulo) → `DuplicateRequestInProgressException`→409 |
+| `UpdateProductUseCase` (PUT) | mesmas validações de criação; o `version` recebido no request precisa efetivamente participar da checagem de conflito (ver nota abaixo) — Hibernate compara com o valor atual da coluna no `UPDATE` e lança `OptimisticLockException` se divergir |
+| `DeactivateProductUseCase` (DELETE) | busca por id (404 se não existir); se já `active=false`, no-op idempotente (204); senão seta `active=false` e `updatedAt=now` |
+| `GetProductUseCase` (GET detail) | 404 se não existir OU `active=false` |
+| `ListProductsUseCase` (GET list) | `Pageable`, filtra `active=true`, sort padrão `createdAt DESC` |
+| `CreateCategoryUseCase` | mesma checagem de `Idempotency-Key` que produto |
+| `UpdateCategoryUseCase` (PUT) | mesmo padrão de optimistic locking (ver nota abaixo) |
+| `DeleteCategoryUseCase` (DELETE) | 404 se não existir; conta produtos **ativos** com aquele `categoryId` — se `> 0`, `CategoryHasActiveProductsException`→422; senão delete físico (204) |
+| `GetCategoryUseCase` / `ListCategoriesUseCase` | GET detail (404) / GET list paginado, sort `createdAt DESC` |
 
 **Nota para a task de PUT/optimistic locking:** carregar a entidade
 gerenciada (managed) e sobrescrever seu `version` manualmente com o valor
@@ -167,8 +167,8 @@ valor obsoleto. Sem (b), o cliente que fizesse `PUT` e reaproveitasse o
 
 ## 8. Idempotência (POST)
 `IdempotencyKeyStore` (port) + implementação em `adapter/persistence`
-sobre `idempotency_keys`. Fluxo em `CriarProdutoUseCase`/
-`CriarCategoriaUseCase` — **grava-primeiro**, não "busca depois grava":
+sobre `idempotency_keys`. Fluxo em `CreateProductUseCase`/
+`CreateCategoryUseCase` — **grava-primeiro**, não "busca depois grava":
 1. Se o header `Idempotency-Key` vier presente, tenta **inserir** a linha
    em `idempotency_keys` (a chave é a PK) antes de criar o recurso.
 2. `INSERT` bem-sucedido → esta requisição "ganhou a corrida": processa
@@ -207,10 +207,10 @@ sobre `idempotency_keys`. Fluxo em `CriarProdutoUseCase`/
 | Exceção capturada | HTTP |
 |---|---|
 | `MethodArgumentNotValidException`, `HttpMessageNotReadableException`, `MethodArgumentTypeMismatchException` (UUID mal formado no path) | 400 |
-| `ProdutoNaoEncontradoException`, `CategoriaNaoEncontradaException` | 404 |
+| `ProductNotFoundException`, `CategoryNotFoundException` | 404 |
 | `ObjectOptimisticLockingFailureException` (Spring envolve a exceção do Hibernate) | 409 |
-| `RequisicaoDuplicadaEmAndamentoException` (`Idempotency-Key` duplicada, recurso ainda não criado — seção 8, passo 3) | 409 |
-| `PrecoInvalidoException`, `CategoriaInexistenteException`, `CategoriaComProdutosAtivosException` | 422 |
+| `DuplicateRequestInProgressException` (`Idempotency-Key` duplicada, recurso ainda não criado — seção 8, passo 3) | 409 |
+| `InvalidPriceException`, `InvalidCategoryException`, `CategoryHasActiveProductsException` | 422 |
 
 Corpo de erro: formato simples e único para todos os casos (`status`,
 `message`, `timestamp`) — não definido no `specify.md`, é uma escolha de
@@ -222,7 +222,7 @@ retornam `Page<T>` (convenção global do CLAUDE.md). Os dois defaults do
 `specify.md` moram em camadas diferentes, de propósito:
 
 - **Ordenação padrão (`createdAt DESC`) → nos usecases de listagem.**
-  `ListarProdutosUseCase`/`ListarCategoriasUseCase` aplicam esse `Sort`
+  `ListProductsUseCase`/`ListCategoriesUseCase` aplicam esse `Sort`
   quando o `Pageable` recebido chega com o `Sort` vazio; um `sort` explícito
   do chamador é respeitado. É regra de negócio, não detalhe de transporte —
   o `specify.md` a lista na seção "Paginação e ordenação" e de novo nos

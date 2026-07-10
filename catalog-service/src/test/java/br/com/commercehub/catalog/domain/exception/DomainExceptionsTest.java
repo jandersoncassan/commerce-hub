@@ -7,48 +7,48 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DomainExceptionsTest {
 
     @Test
-    void produtoNaoEncontradoExceptionCarregaMensagem() {
-        var exception = new ProdutoNaoEncontradoException("produto não encontrado");
+    void productNotFoundExceptionCarriesMessage() {
+        var exception = new ProductNotFoundException("produto não encontrado");
 
         assertThat(exception).isInstanceOf(RuntimeException.class);
         assertThat(exception.getMessage()).isEqualTo("produto não encontrado");
     }
 
     @Test
-    void categoriaNaoEncontradaExceptionCarregaMensagem() {
-        var exception = new CategoriaNaoEncontradaException("categoria não encontrada");
+    void categoryNotFoundExceptionCarriesMessage() {
+        var exception = new CategoryNotFoundException("categoria não encontrada");
 
         assertThat(exception).isInstanceOf(RuntimeException.class);
         assertThat(exception.getMessage()).isEqualTo("categoria não encontrada");
     }
 
     @Test
-    void precoInvalidoExceptionCarregaMensagem() {
-        var exception = new PrecoInvalidoException("preço não pode ser negativo");
+    void invalidPriceExceptionCarriesMessage() {
+        var exception = new InvalidPriceException("preço não pode ser negativo");
 
         assertThat(exception).isInstanceOf(RuntimeException.class);
         assertThat(exception.getMessage()).isEqualTo("preço não pode ser negativo");
     }
 
     @Test
-    void categoriaInexistenteExceptionCarregaMensagem() {
-        var exception = new CategoriaInexistenteException("categoria informada não existe");
+    void invalidCategoryExceptionCarriesMessage() {
+        var exception = new InvalidCategoryException("categoria informada não existe");
 
         assertThat(exception).isInstanceOf(RuntimeException.class);
         assertThat(exception.getMessage()).isEqualTo("categoria informada não existe");
     }
 
     @Test
-    void categoriaComProdutosAtivosExceptionCarregaMensagem() {
-        var exception = new CategoriaComProdutosAtivosException("categoria possui produtos ativos vinculados");
+    void categoryHasActiveProductsExceptionCarriesMessage() {
+        var exception = new CategoryHasActiveProductsException("categoria possui produtos ativos vinculados");
 
         assertThat(exception).isInstanceOf(RuntimeException.class);
         assertThat(exception.getMessage()).isEqualTo("categoria possui produtos ativos vinculados");
     }
 
     @Test
-    void requisicaoDuplicadaEmAndamentoExceptionCarregaMensagem() {
-        var exception = new RequisicaoDuplicadaEmAndamentoException("requisição já está em processamento");
+    void duplicateRequestInProgressExceptionCarriesMessage() {
+        var exception = new DuplicateRequestInProgressException("requisição já está em processamento");
 
         assertThat(exception).isInstanceOf(RuntimeException.class);
         assertThat(exception.getMessage()).isEqualTo("requisição já está em processamento");

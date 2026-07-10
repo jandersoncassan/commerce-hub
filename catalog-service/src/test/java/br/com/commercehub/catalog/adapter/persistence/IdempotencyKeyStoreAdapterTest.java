@@ -37,9 +37,9 @@ class IdempotencyKeyStoreAdapterTest {
     private IdempotencyKeyStoreAdapter store;
 
     @Test
-    void duasGravacoesConcorrentesComAMesmaChaveSoUmaGanhaAInsercao() throws Exception {
+    void onlyOneOfTwoConcurrentInsertsWithTheSameKeyWins() throws Exception {
         UUID key = UUID.randomUUID();
-        OffsetDateTime agora = OffsetDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         int threads = 2;
         ExecutorService pool = Executors.newFixedThreadPool(threads);
         CyclicBarrier barrier = new CyclicBarrier(threads);
@@ -48,26 +48,26 @@ class IdempotencyKeyStoreAdapterTest {
             List<Future<Boolean>> futures = IntStream.range(0, threads)
                 .mapToObj(i -> pool.submit(() -> {
                     barrier.await();
-                    return store.tryInsert(key, "POST", "PRODUCT", agora, agora.plusHours(24));
+                    return store.tryInsert(key, "POST", "PRODUCT", now, now.plusHours(24));
                 }))
                 .toList();
 
-            List<Boolean> resultados = futures.stream()
+            List<Boolean> results = futures.stream()
                 .map(this::getResult)
                 .toList();
 
-            assertThat(resultados).containsExactlyInAnyOrder(true, false);
+            assertThat(results).containsExactlyInAnyOrder(true, false);
         } finally {
             pool.shutdown();
         }
     }
 
     @Test
-    void duasReivindicacoesConcorrentesDaMesmaChaveExpiradaSoUmaGanha() throws Exception {
+    void onlyOneOfTwoConcurrentClaimsOfTheSameExpiredKeyWins() throws Exception {
         UUID key = UUID.randomUUID();
-        OffsetDateTime agora = OffsetDateTime.now();
-        OffsetDateTime expirada = agora.minusHours(1);
-        assertThat(store.tryInsert(key, "POST", "PRODUCT", expirada.minusHours(24), expirada)).isTrue();
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime expired = now.minusHours(1);
+        assertThat(store.tryInsert(key, "POST", "PRODUCT", expired.minusHours(24), expired)).isTrue();
 
         int threads = 2;
         ExecutorService pool = Executors.newFixedThreadPool(threads);
@@ -77,44 +77,44 @@ class IdempotencyKeyStoreAdapterTest {
             List<Future<Boolean>> futures = IntStream.range(0, threads)
                 .mapToObj(i -> pool.submit(() -> {
                     barrier.await();
-                    return store.tryClaimExpired(key, agora, agora.plusHours(24), agora);
+                    return store.tryClaimExpired(key, now, now.plusHours(24), now);
                 }))
                 .toList();
 
-            List<Boolean> resultados = futures.stream()
+            List<Boolean> results = futures.stream()
                 .map(this::getResult)
                 .toList();
 
-            assertThat(resultados).containsExactlyInAnyOrder(true, false);
+            assertThat(results).containsExactlyInAnyOrder(true, false);
         } finally {
             pool.shutdown();
         }
     }
 
     @Test
-    void reivindicarChaveExpiradaLimpaResourceIdEResponseStatus() {
+    void claimingAnExpiredKeyClearsResourceIdAndResponseStatus() {
         UUID key = UUID.randomUUID();
-        OffsetDateTime agora = OffsetDateTime.now();
-        OffsetDateTime expirada = agora.minusHours(1);
-        store.tryInsert(key, "POST", "PRODUCT", expirada.minusHours(24), expirada);
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime expired = now.minusHours(1);
+        store.tryInsert(key, "POST", "PRODUCT", expired.minusHours(24), expired);
         store.markResolved(key, UUID.randomUUID(), 201);
 
-        assertThat(store.tryClaimExpired(key, agora, agora.plusHours(24), agora)).isTrue();
+        assertThat(store.tryClaimExpired(key, now, now.plusHours(24), now)).isTrue();
 
-        assertThat(store.findByKey(key)).hasValueSatisfying(registro -> {
-            assertThat(registro.resourceId()).isNull();
-            assertThat(registro.responseStatus()).isNull();
-            assertThat(registro.expiresAt()).isAfter(agora);
+        assertThat(store.findByKey(key)).hasValueSatisfying(record -> {
+            assertThat(record.resourceId()).isNull();
+            assertThat(record.responseStatus()).isNull();
+            assertThat(record.expiresAt()).isAfter(now);
         });
     }
 
     @Test
-    void naoReivindicaChaveQueAindaNaoExpirou() {
+    void doesNotClaimAKeyThatHasNotExpiredYet() {
         UUID key = UUID.randomUUID();
-        OffsetDateTime agora = OffsetDateTime.now();
-        store.tryInsert(key, "POST", "PRODUCT", agora, agora.plusHours(24));
+        OffsetDateTime now = OffsetDateTime.now();
+        store.tryInsert(key, "POST", "PRODUCT", now, now.plusHours(24));
 
-        assertThat(store.tryClaimExpired(key, agora, agora.plusHours(24), agora)).isFalse();
+        assertThat(store.tryClaimExpired(key, now, now.plusHours(24), now)).isFalse();
     }
 
     private Boolean getResult(Future<Boolean> future) {

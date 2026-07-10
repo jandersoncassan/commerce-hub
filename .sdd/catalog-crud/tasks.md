@@ -44,7 +44,7 @@ unicidade (testável via `psql`).
 
 ## Domain
 
-### TASK-05 — Domain models `Produto` e `Categoria`
+### TASK-05 — Domain models `Product` e `Category`
 **Depende de:** —
 **Descrição:** Records em `domain/model/` conforme seção 6 do plan.md.
 **Critério de aceite:** módulo compila sem nenhum import de
@@ -53,10 +53,10 @@ verifica os campos (round-trip trivial).
 
 ### TASK-06 — Exceções de domínio
 **Depende de:** —
-**Descrição:** `ProdutoNaoEncontradoException`,
-`CategoriaNaoEncontradaException`, `PrecoInvalidoException`,
-`CategoriaInexistenteException`, `CategoriaComProdutosAtivosException`,
-`RequisicaoDuplicadaEmAndamentoException` (`Idempotency-Key` duplicada
+**Descrição:** `ProductNotFoundException`,
+`CategoryNotFoundException`, `InvalidPriceException`,
+`InvalidCategoryException`, `CategoryHasActiveProductsException`,
+`DuplicateRequestInProgressException` (`Idempotency-Key` duplicada
 cujo recurso ainda não foi criado — seção 8 do plan.md, passo 3)
 em `domain/exception/` — todas `RuntimeException` simples, sem
 dependência de framework.
@@ -65,15 +65,15 @@ verifica a mensagem; nenhuma classe importa Spring.
 
 ## Persistência
 
-### TASK-07 — Entidade JPA `ProdutoEntity`
+### TASK-07 — Entidade JPA `ProductEntity`
 **Depende de:** TASK-03, TASK-05, TASK-06
 **Descrição:** `@Entity @Table("products")` em `adapter/persistence/`,
-`@ManyToOne` para `CategoriaEntity`, `@Version`, `toDomain()`/
+`@ManyToOne` para `CategoryEntity`, `@Version`, `toDomain()`/
 `fromDomain()`.
 **Critério de aceite:** teste unitário `fromDomain(produto).toDomain()`
 é igual ao `produto` original (round-trip).
 
-### TASK-08 — Entidade JPA `CategoriaEntity`
+### TASK-08 — Entidade JPA `CategoryEntity`
 **Depende de:** TASK-02, TASK-05, TASK-06
 **Descrição:** `@Entity @Table("categories")`, `@Version`,
 `toDomain()`/`fromDomain()`.
@@ -87,30 +87,30 @@ colunas do V3.
 não H2, precisa de schema e `TIMESTAMPTZ`/`CHECK` reais) grava e lê uma
 linha com sucesso.
 
-### TASK-10 — Ports `ProdutoRepository` / `CategoriaRepository`
+### TASK-10 — Ports `ProductRepository` / `CategoryRepository`
 **Depende de:** TASK-05
 **Descrição:** Interfaces em `application/port/`:
-`ProdutoRepository` (`findById`, `findAllAtivos(Pageable)`, `save`),
-`CategoriaRepository` (`findById`, `findAll(Pageable)`, `save`,
-`deleteById`, `existsById`, `countProdutosAtivosPorCategoria(UUID)`).
+`ProductRepository` (`findById`, `findAllActive(Pageable)`, `save`),
+`CategoryRepository` (`findById`, `findAll(Pageable)`, `save`,
+`deleteById`, `existsById`, `countActiveProductsByCategory(UUID)`).
 **Critério de aceite:** interfaces compilam sem import de
 `jakarta.persistence` nem de `org.springframework.data` — só tipos de
 domínio e `Pageable`/`Page` (utilitário, não framework de persistência).
 
-### TASK-11 — Implementação Spring Data + adapter para `ProdutoRepository`
+### TASK-11 — Implementação Spring Data + adapter para `ProductRepository`
 **Depende de:** TASK-07, TASK-10
-**Descrição:** `ProdutoJpaRepository extends JpaRepository<ProdutoEntity, UUID>`
+**Descrição:** `ProductJpaRepository extends JpaRepository<ProductEntity, UUID>`
 + classe adapter implementando o port em `adapter/persistence/`.
 **Critério de aceite:** teste de integração (Testcontainers Postgres)
-salva um `Produto` e recupera pelo id; `findAllAtivos` com produtos
+salva um `Product` e recupera pelo id; `findAllActive` com produtos
 ativos e inativos misturados no banco retorna só os ativos.
 
-### TASK-12 — Implementação Spring Data + adapter para `CategoriaRepository`
+### TASK-12 — Implementação Spring Data + adapter para `CategoryRepository`
 **Depende de:** TASK-08, TASK-10
 **Descrição:** idem TASK-11 para Categoria, incluindo
-`countProdutosAtivosPorCategoria`.
+`countActiveProductsByCategory`.
 **Critério de aceite:** teste de integração com uma categoria vinculada
-a 1 produto ativo e 2 inativos — `countProdutosAtivosPorCategoria`
+a 1 produto ativo e 2 inativos — `countActiveProductsByCategory`
 retorna `1`.
 
 ### TASK-13 — Port + implementação `IdempotencyKeyStore` (grava-primeiro)
@@ -134,11 +134,11 @@ o que garante isso; `DELETE` + `INSERT` falharia aqui);
 
 ## Usecases
 
-### TASK-14 — `CriarProdutoUseCase`
+### TASK-14 — `CreateProductUseCase`
 **Depende de:** TASK-06, TASK-11, TASK-13
 **Critério de aceite (teste unitário com mocks dos ports):**
-(a) preço negativo → `PrecoInvalidoException`;
-(b) `categoriaId` inexistente → `CategoriaInexistenteException`;
+(a) preço negativo → `InvalidPriceException`;
+(b) `categoryId` inexistente → `InvalidCategoryException`;
 (c) sem `Idempotency-Key` → sempre chama `save`;
 (d) com `Idempotency-Key` já resolvida (mock retorna `resourceId`
 preenchido) → retorna o recurso existente sem chamar `save` de novo;
@@ -146,13 +146,13 @@ preenchido) → retorna o recurso existente sem chamar `save` de novo;
 se não existisse: reivindica a chave via `tryClaimExpired`, processa
 normalmente e cria um novo recurso (TTL de 24h expirando de fato
 desativa a deduplicação). Se `tryClaimExpired` retornar `false` (outra
-requisição reivindicou primeiro) → `RequisicaoDuplicadaEmAndamentoException`;
+requisição reivindicou primeiro) → `DuplicateRequestInProgressException`;
 (f) `Idempotency-Key` presente, **não** expirada e com `resource_id`
 ainda nulo (outra requisição em voo, seção 8 passo 3) →
-`RequisicaoDuplicadaEmAndamentoException`, **sem** chamar `save` — é o
+`DuplicateRequestInProgressException`, **sem** chamar `save` — é o
 que o `GlobalExceptionHandler` (TASK-26) mapeia para 409.
 
-### TASK-15 — `AtualizarProdutoUseCase` (PUT, optimistic locking)
+### TASK-15 — `UpdateProductUseCase` (PUT, optimistic locking)
 **Depende de:** TASK-07, TASK-11, TASK-14
 **Descrição:** aplica a nota do plan.md — usar entidade detached com o
 `version` do request (não sobrescrever `version` de entidade managed).
@@ -161,46 +161,46 @@ persiste um produto, faz PUT com `version` desatualizado e verifica que
 `ObjectOptimisticLockingFailureException` é de fato lançada. Um teste só
 com mocks não cobre esse critério — precisa do Hibernate real.
 
-### TASK-16 — `DesativarProdutoUseCase` (DELETE soft)
+### TASK-16 — `DeactivateProductUseCase` (DELETE soft)
 **Depende de:** TASK-07, TASK-11
 **Critério de aceite:**
-(a) produto ativo → `ativo=false` após a chamada;
+(a) produto ativo → `active=false` após a chamada;
 (b) produto já inativo → chamada não lança erro e não altera
 `updatedAt` (idempotente);
-(c) id inexistente → `ProdutoNaoEncontradoException`.
+(c) id inexistente → `ProductNotFoundException`.
 
-### TASK-17 — `BuscarProdutoUseCase` e `ListarProdutosUseCase`
+### TASK-17 — `GetProductUseCase` e `ListProductsUseCase`
 **Depende de:** TASK-11
 **Critério de aceite:**
-(a) GET detail de produto inativo → `ProdutoNaoEncontradoException`;
+(a) GET detail de produto inativo → `ProductNotFoundException`;
 (b) listagem com produtos ativos e inativos misturados retorna só os
 ativos;
 (c) listagem sem `sort` explícito vem ordenada por `createdAt DESC`.
 
-### TASK-18 — `CriarCategoriaUseCase`
+### TASK-18 — `CreateCategoryUseCase`
 **Depende de:** TASK-06, TASK-12, TASK-13
 **Critério de aceite:** mesmo padrão do TASK-14 (itens c, d e e), sem
-validação de preço/categoriaId.
+validação de preço/`categoryId`.
 
-### TASK-19 — `AtualizarCategoriaUseCase` (PUT, optimistic locking)
+### TASK-19 — `UpdateCategoryUseCase` (PUT, optimistic locking)
 **Depende de:** TASK-08, TASK-12, TASK-18
 **Critério de aceite:** mesmo padrão do TASK-15 aplicado a Categoria
 (teste de integração, `version` desatualizado → 409).
 
-### TASK-20 — `DeletarCategoriaUseCase` (DELETE hard, bloqueio por produtos ativos)
+### TASK-20 — `DeleteCategoryUseCase` (DELETE hard, bloqueio por produtos ativos)
 **Depende de:** TASK-08, TASK-12
 **Critério de aceite:**
 (a) categoria sem produtos vinculados → deleta (linha some da tabela,
 verificável por `findById` retornando vazio);
 (b) categoria com ao menos um produto **ativo** vinculado →
-`CategoriaComProdutosAtivosException`, categoria continua no banco;
+`CategoryHasActiveProductsException`, categoria continua no banco;
 (c) categoria só com produtos **inativos** vinculados → deleta
 normalmente (não bloqueia).
 
-### TASK-21 — `BuscarCategoriaUseCase` e `ListarCategoriasUseCase`
+### TASK-21 — `GetCategoryUseCase` e `ListCategoriesUseCase`
 **Depende de:** TASK-12
 **Critério de aceite:** GET detail de categoria inexistente →
-`CategoriaNaoEncontradaException`; listagem paginada ordenada por
+`CategoryNotFoundException`; listagem paginada ordenada por
 `createdAt DESC`.
 
 ## Web
@@ -209,23 +209,23 @@ normalmente (não bloqueia).
 **Depende de:** TASK-05
 **Descrição:** records em `adapter/web/` com `@NotBlank`/`@DecimalMin`
 etc.
-**Critério de aceite:** request com `nome` em branco falha o binding
-(`MethodArgumentNotValidException`); campo `preco` com tipo inválido no
+**Critério de aceite:** request com `name` em branco falha o binding
+(`MethodArgumentNotValidException`); campo `price` com tipo inválido no
 JSON dispara `HttpMessageNotReadableException`.
 
 ### TASK-23 — DTOs de Categoria (request/response)
 **Depende de:** TASK-05
 **Critério de aceite:** mesmo padrão de validação do TASK-22 para
-`nome`.
+`name`.
 
-### TASK-24 — `ProdutoController` (5 endpoints)
+### TASK-24 — `ProductController` (5 endpoints)
 **Depende de:** TASK-14 a TASK-17, TASK-22
 **Critério de aceite:** teste de integração (`MockMvc`/`WebTestClient`)
 cobre um caso de sucesso por endpoint: GET list → 200, GET detail → 200,
 POST → 201 com header `Location` contendo a URI do recurso criado (ex.:
 `/api/catalog/products/{id}`), PUT → 200, DELETE → 204.
 
-### TASK-25 — `CategoriaController` (5 endpoints)
+### TASK-25 — `CategoryController` (5 endpoints)
 **Depende de:** TASK-18 a TASK-21, TASK-23
 **Critério de aceite:** mesmo padrão do TASK-24 (incluindo POST → 201
 com header `Location`), mais DELETE → 422 quando há produto ativo
