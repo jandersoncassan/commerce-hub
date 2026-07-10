@@ -45,4 +45,12 @@ class DomainExceptionsTest {
         assertThat(exception).isInstanceOf(RuntimeException.class);
         assertThat(exception.getMessage()).isEqualTo("categoria possui produtos ativos vinculados");
     }
+
+    @Test
+    void requisicaoDuplicadaEmAndamentoExceptionCarregaMensagem() {
+        var exception = new RequisicaoDuplicadaEmAndamentoException("requisição já está em processamento");
+
+        assertThat(exception).isInstanceOf(RuntimeException.class);
+        assertThat(exception.getMessage()).isEqualTo("requisição já está em processamento");
+    }
 }

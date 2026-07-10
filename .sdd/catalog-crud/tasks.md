@@ -55,7 +55,9 @@ verifica os campos (round-trip trivial).
 **Depende de:** —
 **Descrição:** `ProdutoNaoEncontradoException`,
 `CategoriaNaoEncontradaException`, `PrecoInvalidoException`,
-`CategoriaInexistenteException`, `CategoriaComProdutosAtivosException`
+`CategoriaInexistenteException`, `CategoriaComProdutosAtivosException`,
+`RequisicaoDuplicadaEmAndamentoException` (`Idempotency-Key` duplicada
+cujo recurso ainda não foi criado — seção 8 do plan.md, passo 3)
 em `domain/exception/` — todas `RuntimeException` simples, sem
 dependência de framework.
 **Critério de aceite:** teste unitário instancia cada exceção e
@@ -115,11 +117,20 @@ retorna `1`.
 **Depende de:** TASK-09
 **Descrição:** Implementa a estratégia "insert-first" da seção 8 do
 plan.md: tenta `INSERT`, captura `DataIntegrityViolationException` em
-caso de chave duplicada.
-**Critério de aceite:** teste de integração dispara duas gravações
+caso de chave duplicada. Inclui `tryClaimExpired` — o `UPDATE`
+condicional (`WHERE idempotency_key = ? AND expires_at <= now`) do passo
+5 da seção 8, que renova `created_at`/`expires_at` e reseta
+`resource_id`/`response_status` para `NULL` na mesma instrução.
+**Critério de aceite:**
+(a) teste de integração dispara duas gravações
 concorrentes com a mesma chave (duas threads/transações) e verifica que
 exatamente uma recebe sucesso no `INSERT` e a outra recebe a exceção de
-violação de unicidade — reproduz a race condition apontada no plan.md.
+violação de unicidade — reproduz a race condition apontada no plan.md;
+(b) duas threads chamando `tryClaimExpired` sobre a mesma chave expirada
+— exatamente uma recebe `true` (a atomicidade do `UPDATE` condicional é
+o que garante isso; `DELETE` + `INSERT` falharia aqui);
+(c) após uma reivindicação bem-sucedida, `resource_id` e
+`response_status` da linha voltaram a `NULL`.
 
 ## Usecases
 
@@ -132,8 +143,14 @@ violação de unicidade — reproduz a race condition apontada no plan.md.
 (d) com `Idempotency-Key` já resolvida (mock retorna `resourceId`
 preenchido) → retorna o recurso existente sem chamar `save` de novo;
 (e) `Idempotency-Key` presente mas com `expires_at < now` → trata como
-se não existisse: processa normalmente e cria um novo recurso (TTL de
-24h expirando de fato desativa a deduplicação).
+se não existisse: reivindica a chave via `tryClaimExpired`, processa
+normalmente e cria um novo recurso (TTL de 24h expirando de fato
+desativa a deduplicação). Se `tryClaimExpired` retornar `false` (outra
+requisição reivindicou primeiro) → `RequisicaoDuplicadaEmAndamentoException`;
+(f) `Idempotency-Key` presente, **não** expirada e com `resource_id`
+ainda nulo (outra requisição em voo, seção 8 passo 3) →
+`RequisicaoDuplicadaEmAndamentoException`, **sem** chamar `save` — é o
+que o `GlobalExceptionHandler` (TASK-26) mapeia para 409.
 
 ### TASK-15 — `AtualizarProdutoUseCase` (PUT, optimistic locking)
 **Depende de:** TASK-07, TASK-11, TASK-14

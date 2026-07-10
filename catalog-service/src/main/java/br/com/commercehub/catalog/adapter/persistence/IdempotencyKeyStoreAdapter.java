@@ -51,6 +51,21 @@ public class IdempotencyKeyStoreAdapter implements IdempotencyKeyStore {
         }
     }
 
+    /**
+     * Diferente de {@link #tryInsert}, aqui não é preciso REQUIRES_NEW/TransactionTemplate:
+     * um UPDATE que afeta 0 linhas não é erro e não marca a transação rollback-only — só o
+     * flush de um INSERT duplicado fazia isso. A atomicidade vem do próprio {@code WHERE
+     * expires_at <= now}: se duas requisições disputarem a mesma chave expirada, a segunda
+     * bloqueia no lock da linha, reavalia o predicado depois do commit da primeira (o
+     * {@code expires_at} já renovado) e afeta 0 linhas.
+     */
+    @Override
+    @Transactional
+    public boolean tryClaimExpired(UUID idempotencyKey, OffsetDateTime createdAt,
+                                    OffsetDateTime expiresAt, OffsetDateTime now) {
+        return jpaRepository.claimExpired(idempotencyKey, createdAt, expiresAt, now) == 1;
+    }
+
     @Override
     @Transactional
     public void markResolved(UUID idempotencyKey, UUID resourceId, int responseStatus) {

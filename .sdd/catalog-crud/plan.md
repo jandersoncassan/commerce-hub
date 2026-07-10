@@ -129,7 +129,7 @@ public record Categoria(
 ## 7. Usecases (`application/usecase/`) — regra de negócio por operação
 | Usecase | Regra |
 |---|---|
-| `CriarProdutoUseCase` | valida `preco >= 0` (senão `PrecoInvalidoException`→422); valida `categoriaId` existente (senão `CategoriaInexistenteException`→422); checa `Idempotency-Key` via `IdempotencyKeyStore` antes de processar |
+| `CriarProdutoUseCase` | valida `preco >= 0` (senão `PrecoInvalidoException`→422); valida `categoriaId` existente (senão `CategoriaInexistenteException`→422); checa `Idempotency-Key` via `IdempotencyKeyStore` antes de processar, com três desfechos: chave nova ou expirada reivindicada → cria e retorna 201; chave já resolvida → devolve o recurso existente com 200; chave em voo (`resource_id` ainda nulo) → `RequisicaoDuplicadaEmAndamentoException`→409 |
 | `AtualizarProdutoUseCase` (PUT) | mesmas validações de criação; o `version` recebido no request precisa efetivamente participar da checagem de conflito (ver nota abaixo) — Hibernate compara com o valor atual da coluna no `UPDATE` e lança `OptimisticLockException` se divergir |
 | `DesativarProdutoUseCase` (DELETE) | busca por id (404 se não existir); se já `ativo=false`, no-op idempotente (204); senão seta `ativo=false` e `updatedAt=now` |
 | `BuscarProdutoUseCase` (GET detail) | 404 se não existir OU `ativo=false` |
@@ -172,7 +172,25 @@ sobre `idempotency_keys`. Fluxo em `CriarProdutoUseCase`/
    com a mesma key criariam dois recursos.
 4. Chave existente e não expirada (`expires_at > now`), fora de uma
    corrida (fluxo normal de retry) → passo 3 cobre também esse caso.
-5. Sem header → comportamento normal, sempre cria (sem deduplicação).
+5. Chave existente e **expirada** (`expires_at <= now`) → o TTL de 24h já
+   passou, a deduplicação não vale mais: a requisição deve criar um recurso
+   novo. Mas a linha ainda ocupa a PK, então o `INSERT` do passo 1 falha.
+   Reivindicar a linha expirada com `tryClaimExpired`: um **`UPDATE`
+   condicional** (`WHERE idempotency_key = ? AND expires_at <= now`) que
+   renova `created_at`/`expires_at` e **reseta `resource_id` e
+   `response_status` para `NULL` na mesma instrução** — a chave volta ao
+   mesmo estado "em processamento" que o `INSERT` do passo 2 produz. Se o
+   `UPDATE` afetar 1 linha, esta requisição reivindicou a chave e processa a
+   criação; se afetar 0 linhas, outra requisição reivindicou primeiro e o
+   caso recai no passo 3 (duplicata em voo).
+
+   Não usar `DELETE` seguido de novo `INSERT`: são duas operações, e a
+   janela entre elas reabre exatamente a race condition que a estratégia
+   grava-primeiro existe para eliminar (dois `POST`s simultâneos sobre uma
+   chave expirada deletariam e inseririam cada um, criando dois recursos). O
+   `UPDATE` condicional resolve em uma única operação atômica — quem vence é
+   decidido pelo próprio banco, sem janela.
+6. Sem header → comportamento normal, sempre cria (sem deduplicação).
 
 ## 9. Contrato de erros → `GlobalExceptionHandler`
 | Exceção capturada | HTTP |
@@ -180,6 +198,7 @@ sobre `idempotency_keys`. Fluxo em `CriarProdutoUseCase`/
 | `MethodArgumentNotValidException`, `HttpMessageNotReadableException`, `MethodArgumentTypeMismatchException` (UUID mal formado no path) | 400 |
 | `ProdutoNaoEncontradoException`, `CategoriaNaoEncontradaException` | 404 |
 | `ObjectOptimisticLockingFailureException` (Spring envolve a exceção do Hibernate) | 409 |
+| `RequisicaoDuplicadaEmAndamentoException` (`Idempotency-Key` duplicada, recurso ainda não criado — seção 8, passo 3) | 409 |
 | `PrecoInvalidoException`, `CategoriaInexistenteException`, `CategoriaComProdutosAtivosException` | 422 |
 
 Corpo de erro: formato simples e único para todos os casos (`status`,
