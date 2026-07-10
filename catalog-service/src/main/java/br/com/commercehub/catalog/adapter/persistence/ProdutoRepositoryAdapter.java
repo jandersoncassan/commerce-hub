@@ -28,8 +28,14 @@ public class ProdutoRepositoryAdapter implements ProdutoRepository {
         return jpaRepository.findByActiveTrue(pageable).map(ProdutoEntity::toDomain);
     }
 
+    /**
+     * {@code saveAndFlush}, não {@code save}: o flush é o que faz o Hibernate emitir o UPDATE
+     * ainda dentro da chamada, de modo que (a) um conflito de {@code version} vire
+     * {@code ObjectOptimisticLockingFailureException} aqui, e não lá no commit da transação,
+     * e (b) o {@code version} incrementado já esteja na entidade que devolvemos ao chamador.
+     */
     @Override
     public Produto save(Produto produto) {
-        return jpaRepository.save(ProdutoEntity.fromDomain(produto)).toDomain();
+        return jpaRepository.saveAndFlush(ProdutoEntity.fromDomain(produto)).toDomain();
     }
 }

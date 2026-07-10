@@ -4,15 +4,12 @@ import br.com.commercehub.catalog.application.port.CategoriaRepository;
 import br.com.commercehub.catalog.application.port.IdempotencyKeyStore;
 import br.com.commercehub.catalog.application.port.IdempotencyKeyStore.IdempotencyKeyRecord;
 import br.com.commercehub.catalog.application.port.ProdutoRepository;
-import br.com.commercehub.catalog.domain.exception.CategoriaInexistenteException;
-import br.com.commercehub.catalog.domain.exception.PrecoInvalidoException;
 import br.com.commercehub.catalog.domain.exception.ProdutoNaoEncontradoException;
 import br.com.commercehub.catalog.domain.exception.RequisicaoDuplicadaEmAndamentoException;
 import br.com.commercehub.catalog.domain.model.Produto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -54,7 +51,7 @@ public class CriarProdutoUseCase {
      *                       quando o cliente não o enviou (sem deduplicação).
      */
     public ResultadoCriacao<Produto> executar(CriarProdutoCommand comando, UUID idempotencyKey) {
-        validar(comando);
+        ProdutoValidacao.validar(comando.preco(), comando.categoriaId(), categoriaRepository);
 
         if (idempotencyKey == null) {
             return ResultadoCriacao.novo(criar(comando, OffsetDateTime.now()));
@@ -105,15 +102,6 @@ public class CriarProdutoUseCase {
     private Produto buscar(UUID produtoId) {
         return produtoRepository.findById(produtoId)
             .orElseThrow(() -> new ProdutoNaoEncontradoException("Produto não encontrado: " + produtoId));
-    }
-
-    private void validar(CriarProdutoCommand comando) {
-        if (comando.preco() == null || comando.preco().compareTo(BigDecimal.ZERO) < 0) {
-            throw new PrecoInvalidoException("Preço não pode ser negativo: " + comando.preco());
-        }
-        if (!categoriaRepository.existsById(comando.categoriaId())) {
-            throw new CategoriaInexistenteException("Categoria não encontrada: " + comando.categoriaId());
-        }
     }
 
     private static boolean expirada(IdempotencyKeyRecord registro, OffsetDateTime agora) {

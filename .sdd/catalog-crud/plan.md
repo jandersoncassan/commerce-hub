@@ -154,6 +154,17 @@ verifica "PUT com version errado dá 409" pode passar por acidente mesmo
 com a implementação ingênua (managed) se o teste não isolar a
 transação/sessão corretamente.
 
+**Nota sobre o `save` dos adapters de repositório:** os adapters usam
+`saveAndFlush`, não `save`. O flush é o que faz o Hibernate emitir o
+`UPDATE` ainda dentro da chamada do port, com duas consequências que o
+optimistic locking depende: (a) um `version` divergente vira
+`ObjectOptimisticLockingFailureException` ali, dentro do usecase, e não lá
+no commit da transação — onde ficaria fora do alcance do
+`GlobalExceptionHandler` (seção 9) e do teste de integração da task; e (b) o
+`version` já incrementado está na entidade devolvida ao chamador, e não um
+valor obsoleto. Sem (b), o cliente que fizesse `PUT` e reaproveitasse o
+`version` da resposta receberia 409 na requisição seguinte.
+
 ## 8. Idempotência (POST)
 `IdempotencyKeyStore` (port) + implementação em `adapter/persistence`
 sobre `idempotency_keys`. Fluxo em `CriarProdutoUseCase`/
