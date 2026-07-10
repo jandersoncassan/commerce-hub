@@ -216,11 +216,25 @@ Corpo de erro: formato simples e único para todos os casos (`status`,
 `message`, `timestamp`) — não definido no `specify.md`, é uma escolha de
 implementação, não um requisito do contrato.
 
-## 10. Paginação
-`GET /products` e `GET /categories` usam `Pageable` do Spring Data com
-`@PageableDefault(sort = "createdAt", direction = DESC, size = 12 | 20)`
-conforme o default de cada endpoint no `specify.md`. Retornam `Page<T>`
-(convenção global do CLAUDE.md).
+## 10. Paginação e ordenação
+`GET /products` e `GET /categories` usam `Pageable` do Spring Data e
+retornam `Page<T>` (convenção global do CLAUDE.md). Os dois defaults do
+`specify.md` moram em camadas diferentes, de propósito:
+
+- **Ordenação padrão (`createdAt DESC`) → nos usecases de listagem.**
+  `ListarProdutosUseCase`/`ListarCategoriasUseCase` aplicam esse `Sort`
+  quando o `Pageable` recebido chega com o `Sort` vazio; um `sort` explícito
+  do chamador é respeitado. É regra de negócio, não detalhe de transporte —
+  o `specify.md` a lista na seção "Paginação e ordenação" e de novo nos
+  critérios de aceite, e vale para qualquer chamador da listagem, não só o
+  HTTP.
+- **Tamanho de página padrão (12 produtos / 20 categorias) → no
+  `@PageableDefault` dos controllers.** Esse *é* detalhe de transporte: é o
+  que a API oferece a um cliente que não pediu `size`.
+
+Consequência prática: não mova o `sort` de volta para o `@PageableDefault`.
+Lá ele não seria verificável pelos testes de usecase (o critério (c) da
+TASK-17), e a regra vazaria para o adapter web.
 
 ## 11. Fora do escopo (herdado do specify.md)
 Sem eventos (`ProductUpdated`), sem PATCH, sem hierarquia de categoria,
