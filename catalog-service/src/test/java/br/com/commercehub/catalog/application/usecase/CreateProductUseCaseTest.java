@@ -11,7 +11,6 @@ import br.com.commercehub.catalog.domain.model.Product;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -44,11 +43,17 @@ class CreateProductUseCaseTest {
     @Mock
     private IdempotencyKeyStore idempotencyKeyStore;
 
-    @InjectMocks
     private CreateProductUseCase useCase;
 
+    /**
+     * {@link IdempotentCreation} de verdade sobre um {@code IdempotencyKeyStore} mockado, não
+     * um mock do próprio colaborador: os critérios (c) a (f) do TASK-14 são sobre o fluxo
+     * grava-primeiro, e mocká-lo transformaria estes testes em verificação de delegação.
+     */
     @BeforeEach
     void categoryExistsByDefault() {
+        useCase = new CreateProductUseCase(productRepository, categoryRepository,
+            new IdempotentCreation(idempotencyKeyStore));
         lenient().when(categoryRepository.existsById(CATEGORY_ID)).thenReturn(true);
         lenient().when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
     }

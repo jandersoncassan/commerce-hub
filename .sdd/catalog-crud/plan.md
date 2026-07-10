@@ -167,8 +167,17 @@ valor obsoleto. Sem (b), o cliente que fizesse `PUT` e reaproveitasse o
 
 ## 8. Idempotência (POST)
 `IdempotencyKeyStore` (port) + implementação em `adapter/persistence`
-sobre `idempotency_keys`. Fluxo em `CreateProductUseCase`/
-`CreateCategoryUseCase` — **grava-primeiro**, não "busca depois grava":
+sobre `idempotency_keys`.
+
+O fluxo abaixo mora **uma única vez**, no colaborador `IdempotentCreation`
+(`application/usecase/`); `CreateProductUseCase` e `CreateCategoryUseCase` o
+reusam passando um `ResourceCreator<T>` que diz só o que varia entre eles:
+o `resourceType` (`PRODUCT`/`CATEGORY`), como criar o recurso e como
+recarregá-lo pelo id. Duas cópias desta lógica seriam duas cópias de código
+de concorrência — a reivindicação da chave expirada e o 409 em voo são
+sutis, e uma correção aplicada a um dos usecases não chegaria ao outro.
+
+Fluxo — **grava-primeiro**, não "busca depois grava":
 1. Se o header `Idempotency-Key` vier presente, tenta **inserir** a linha
    em `idempotency_keys` (a chave é a PK) antes de criar o recurso.
 2. `INSERT` bem-sucedido → esta requisição "ganhou a corrida": processa

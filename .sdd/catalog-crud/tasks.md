@@ -179,8 +179,13 @@ ativos;
 
 ### TASK-18 — `CreateCategoryUseCase`
 **Depende de:** TASK-06, TASK-12, TASK-13
-**Critério de aceite:** mesmo padrão do TASK-14 (itens c, d e e), sem
-validação de preço/`categoryId`.
+**Descrição:** segunda cópia do fluxo grava-primeiro — extraí-lo para o
+colaborador `IdempotentCreation` (seção 8 do plan.md) em vez de duplicar a
+lógica de corrida, e reescrever `CreateProductUseCase` sobre ele.
+**Critério de aceite:** mesmo padrão do TASK-14 (itens c, d, e e f), sem
+validação de preço/`categoryId`. Os testes do TASK-14 continuam passando
+sobre o fluxo extraído — é o que garante que a extração não mudou
+comportamento.
 
 ### TASK-19 — `UpdateCategoryUseCase` (PUT, optimistic locking)
 **Depende de:** TASK-08, TASK-12, TASK-18
