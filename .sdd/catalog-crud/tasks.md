@@ -214,7 +214,7 @@ normalmente (não bloqueia).
 
 ## Web
 
-### TASK-22 — DTOs de Produto (request/response) com Bean Validation
+### [x] TASK-22 — DTOs de Produto (request/response) com Bean Validation
 **Depende de:** TASK-05
 **Descrição:** records em `adapter/web/` com `@NotBlank`/`@DecimalMin`
 etc.
