@@ -41,9 +41,7 @@ public class IdempotencyKeyStoreAdapter implements IdempotencyKeyStore {
                               OffsetDateTime createdAt, OffsetDateTime expiresAt) {
         try {
             requiresNewTransaction.executeWithoutResult(status ->
-                jpaRepository.saveAndFlush(
-                    new IdempotencyKeyEntity(idempotencyKey, httpMethod, resourceType, null, null, createdAt, expiresAt)
-                )
+                jpaRepository.insertNew(idempotencyKey, httpMethod, resourceType, createdAt, expiresAt)
             );
             return true;
         } catch (DataIntegrityViolationException e) {

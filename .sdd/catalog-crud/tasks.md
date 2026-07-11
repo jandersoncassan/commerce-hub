@@ -251,7 +251,7 @@ teste genérico.
 
 ## Fim-a-fim
 
-### TASK-27 — Fluxo completo de idempotência via HTTP
+### [x] TASK-27 — Fluxo completo de idempotência via HTTP
 **Depende de:** TASK-24, TASK-25
 **Critério de aceite:** dois `POST` HTTP sequenciais com o mesmo
 `Idempotency-Key` retornam 201 na primeira e 200 na segunda, com o
