@@ -222,7 +222,7 @@ etc.
 (`MethodArgumentNotValidException`); campo `price` com tipo inválido no
 JSON dispara `HttpMessageNotReadableException`.
 
-### TASK-23 — DTOs de Categoria (request/response)
+### [x] TASK-23 — DTOs de Categoria (request/response)
 **Depende de:** TASK-05
 **Critério de aceite:** mesmo padrão de validação do TASK-22 para
 `name`.
