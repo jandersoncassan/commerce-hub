@@ -8,7 +8,6 @@ import br.com.commercehub.catalog.application.usecase.GetCategoryUseCase;
 import br.com.commercehub.catalog.application.usecase.ListCategoriesUseCase;
 import br.com.commercehub.catalog.application.usecase.UpdateCategoryCommand;
 import br.com.commercehub.catalog.application.usecase.UpdateCategoryUseCase;
-import br.com.commercehub.catalog.domain.exception.CategoryHasActiveProductsException;
 import br.com.commercehub.catalog.domain.model.Category;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -17,7 +16,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -87,15 +85,5 @@ public class CategoryController {
     public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         deleteCategoryUseCase.execute(id);
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * Mapeamento local e provisório: o {@code GlobalExceptionHandler} da TASK-26 cobrirá esta e
-     * as demais exceções de domínio para todos os controllers; até lá, o critério de aceite da
-     * TASK-25 (DELETE 422 com produto ativo vinculado) precisa desse handler aqui.
-     */
-    @ExceptionHandler(CategoryHasActiveProductsException.class)
-    public ResponseEntity<Void> handleCategoryHasActiveProducts(CategoryHasActiveProductsException ex) {
-        return ResponseEntity.unprocessableEntity().build();
     }
 }

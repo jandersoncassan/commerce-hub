@@ -240,7 +240,7 @@ POST → 201 com header `Location` contendo a URI do recurso criado (ex.:
 com header `Location`), mais DELETE → 422 quando há produto ativo
 vinculado (teste ponta a ponta via HTTP, não só usecase isolado).
 
-### TASK-26 — `GlobalExceptionHandler`
+### [x] TASK-26 — `GlobalExceptionHandler`
 **Depende de:** TASK-06, TASK-24, TASK-25
 **Descrição:** `@RestControllerAdvice` mapeando a tabela da seção 9 do
 plan.md.
