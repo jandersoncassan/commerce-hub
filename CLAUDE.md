@@ -125,3 +125,22 @@ Java 21, reactor multi-módulo Maven.
 - Testes:           `mvn test -pl <module-name>`
 
 Ainda não há ferramental de teste/lint no nível raiz além do Maven padrão (sem configuração de CI, sem linters configurados). À medida que módulos forem adicionados, prefira comandos Maven escopados por módulo em vez de um build completo do reactor, para iteração mais rápida.
+
+## Hook de commit (`.claude/hooks/`)
+
+`git commit` só é liberado se `.claude/.tests-passed` for mais recente que
+qualquer `.java` alterado (`pre-bash.sh`). Esse marcador deveria ser tocado
+automaticamente pelo `post-bash.sh` sempre que um `mvn test`/`mvn test -pl
+<módulo>` rodar com sucesso via Bash — mas em pelo menos uma sessão (Windows
++ Git Bash tool, 2026-07-11) esse `PostToolUse` não disparou em nenhuma
+chamada real, mesmo com `BUILD SUCCESS`. O script do hook está correto;
+só não foi acionado pelo harness.
+
+Se `git commit` for bloqueado logo após um `mvn test` que passou de verdade,
+sincronize o marcador manualmente a partir da raiz do repo antes de tentar
+de novo:
+```
+echo '{"tool_input":{"command":"mvn test -pl <módulo>"}}' | bash .claude/hooks/post-bash.sh
+```
+Isso não é bypass do hook — só refaz a ação que ele mesmo executaria, e
+somente depois de confirmar que os testes realmente passaram.
