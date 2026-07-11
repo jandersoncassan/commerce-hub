@@ -234,7 +234,7 @@ cobre um caso de sucesso por endpoint: GET list → 200, GET detail → 200,
 POST → 201 com header `Location` contendo a URI do recurso criado (ex.:
 `/api/catalog/products/{id}`), PUT → 200, DELETE → 204.
 
-### TASK-25 — `CategoryController` (5 endpoints)
+### [x] TASK-25 — `CategoryController` (5 endpoints)
 **Depende de:** TASK-18 a TASK-21, TASK-23
 **Critério de aceite:** mesmo padrão do TASK-24 (incluindo POST → 201
 com header `Location`), mais DELETE → 422 quando há produto ativo
