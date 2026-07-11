@@ -227,7 +227,7 @@ JSON dispara `HttpMessageNotReadableException`.
 **Critério de aceite:** mesmo padrão de validação do TASK-22 para
 `name`.
 
-### TASK-24 — `ProductController` (5 endpoints)
+### [x] TASK-24 — `ProductController` (5 endpoints)
 **Depende de:** TASK-14 a TASK-17, TASK-22
 **Critério de aceite:** teste de integração (`MockMvc`/`WebTestClient`)
 cobre um caso de sucesso por endpoint: GET list → 200, GET detail → 200,
