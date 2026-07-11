@@ -11,4 +11,6 @@ interface ProductJpaRepository extends JpaRepository<ProductEntity, UUID> {
     Page<ProductEntity> findByActiveTrue(Pageable pageable);
 
     long countByCategory_IdAndActiveTrue(UUID categoryId);
+
+    void deleteByCategory_IdAndActiveFalse(UUID categoryId);
 }

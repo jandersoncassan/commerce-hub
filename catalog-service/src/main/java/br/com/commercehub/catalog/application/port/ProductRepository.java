@@ -14,4 +14,6 @@ public interface ProductRepository {
     Page<Product> findAllActive(Pageable pageable);
 
     Product save(Product product);
+
+    void deleteInactiveByCategory(UUID categoryId);
 }

@@ -38,4 +38,9 @@ public class ProductRepositoryAdapter implements ProductRepository {
     public Product save(Product product) {
         return jpaRepository.saveAndFlush(ProductEntity.fromDomain(product)).toDomain();
     }
+
+    @Override
+    public void deleteInactiveByCategory(UUID categoryId) {
+        jpaRepository.deleteByCategory_IdAndActiveFalse(categoryId);
+    }
 }
