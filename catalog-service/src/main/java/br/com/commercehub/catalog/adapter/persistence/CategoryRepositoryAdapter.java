@@ -30,9 +30,15 @@ public class CategoryRepositoryAdapter implements CategoryRepository {
         return jpaRepository.findAll(pageable).map(CategoryEntity::toDomain);
     }
 
+    /**
+     * {@code saveAndFlush}, não {@code save}: mesmo motivo do {@code ProductRepositoryAdapter} —
+     * o flush faz o Hibernate emitir o UPDATE dentro da chamada, para que um {@code version}
+     * divergente vire {@code ObjectOptimisticLockingFailureException} aqui, e não no commit da
+     * transação.
+     */
     @Override
     public Category save(Category category) {
-        return jpaRepository.save(CategoryEntity.fromDomain(category)).toDomain();
+        return jpaRepository.saveAndFlush(CategoryEntity.fromDomain(category)).toDomain();
     }
 
     @Override
