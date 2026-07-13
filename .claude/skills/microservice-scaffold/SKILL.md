@@ -192,6 +192,8 @@ server:
   port: {porta}  # ver tabela de portas acima
 
 eureka:
+  instance:
+    prefer-ip-address: true
   client:
     service-url:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
@@ -309,6 +311,8 @@ server:
   port: 8080
 
 eureka:
+  instance:
+    prefer-ip-address: true
   client:
     service-url:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
