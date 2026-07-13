@@ -258,7 +258,7 @@ teste genérico.
 mesmo id de recurso no corpo; disparados **simultaneamente** (mesma
 key), resultam em exatamente um recurso criado no banco.
 
-### TASK-28 — Fluxo completo de optimistic locking via HTTP
+### [x] TASK-28 — Fluxo completo de optimistic locking via HTTP
 **Depende de:** TASK-24, TASK-25
 **Critério de aceite:** `PUT` com `version` correto retorna 200; um
 segundo `PUT` reaproveitando o `version` antigo (sem refazer o GET)
