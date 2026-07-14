@@ -11,5 +11,57 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  discovery-service:
+    build: ./discovery-service
+    container_name: commerce-discovery-service
+    ports:
+      - "8761:8761"
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: commerce-api-gateway
+    environment:
+      EUREKA_URL: http://discovery-service:8761/eureka
+    ports:
+      - "8080:8080"
+    depends_on:
+      - discovery-service
+
+  catalog-service:
+    build: ./catalog-service
+    container_name: commerce-catalog-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/commercedb
+      DB_USER: commerce
+      DB_PASS: commerce123
+      EUREKA_URL: http://discovery-service:8761/eureka
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres
+      - discovery-service
+
+  auth-service:
+    build: ./auth-service
+    container_name: commerce-auth-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/commercedb
+      DB_USER: commerce
+      DB_PASS: commerce123
+      EUREKA_URL: http://discovery-service:8761/eureka
+      # Sem ":?erro" aqui de propósito: o Compose interpola o arquivo
+      # inteiro antes de filtrar os serviços pedidos, então uma variável
+      # obrigatória neste bloco bloquearia "docker compose up" de
+      # QUALQUER serviço (até postgres/discovery-service) se JWT_SECRET
+      # não estiver setado. Quem garante "sem fallback" de verdade é o
+      # JwtTokenGenerator no boot do Spring (auth-service, TASK-09 do
+      # .sdd/auth-jwt/tasks.md) — sem default lá, não aqui.
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+      - discovery-service
+
 volumes:
   postgres_data:

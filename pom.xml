@@ -13,19 +13,20 @@
     <!-- Só entram aqui os módulos que já existem no repositório. Ao
          criar um novo serviço (skill microservice-scaffold), adicione
          a linha correspondente. Os demais serviços planejados são:
-         api-gateway, auth-service, catalog-service, inventory-service,
-         customer-service, cart-service, order-service, payment-service,
-         notification-service. -->
+         inventory-service, customer-service, cart-service, order-service,
+         payment-service, notification-service. -->
     <modules>
         <module>discovery-service</module>
         <module>api-gateway</module>
         <module>catalog-service</module>
+        <module>auth-service</module>
     </modules>
 
     <properties>
         <java.version>21</java.version>
         <spring-boot.version>3.3.4</spring-boot.version>
         <spring-cloud.version>2023.0.3</spring-cloud.version>
+        <jjwt.version>0.12.6</jjwt.version>
     </properties>
 
     <dependencyManagement>
@@ -43,6 +44,23 @@
                 <version>${spring-cloud.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <!-- Não coberto pelo BOM do Spring Boot — usado por auth-service
+                 para emissão de JWT (skill spring-security-jwt). -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
