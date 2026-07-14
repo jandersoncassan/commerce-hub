@@ -71,7 +71,7 @@ seção 6 do plan.md.
 `User` com `Set.of(Role.ROLE_CUSTOMER)` e verifica os campos (round-trip
 trivial).
 
-### [ ] TASK-04 — Exceções de domínio
+### [x] TASK-04 — Exceções de domínio
 **Depende de:** —
 **Descrição:** `InvalidCredentialsException` e
 `EmailAlreadyRegisteredException` em `domain/exception/` — `RuntimeException`
