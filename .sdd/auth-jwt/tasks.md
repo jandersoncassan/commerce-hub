@@ -98,7 +98,7 @@ igual ao `user` original, incluindo o conjunto de `roles` (round-trip).
 `jakarta.persistence` nem `org.springframework.data` — só tipos de
 domínio.
 
-### [ ] TASK-07 — Implementação Spring Data + adapter para `UserRepository`
+### [x] TASK-07 — Implementação Spring Data + adapter para `UserRepository`
 **Depende de:** TASK-05, TASK-06
 **Descrição:** `UserJpaRepository extends JpaRepository<UserEntity, UUID>`
 + `UserRepositoryAdapter` implementando o port; captura
