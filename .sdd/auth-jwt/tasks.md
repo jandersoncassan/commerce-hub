@@ -125,7 +125,7 @@ senha original; `matches(senha, hash(senha))` é `true`;
 `matches(senhaErrada, hash)` é `false`; dois `hash()` da mesma senha
 produzem valores diferentes (salt).
 
-### [ ] TASK-09 — Port `TokenGenerator` + `JwtTokenGenerator`
+### [x] TASK-09 — Port `TokenGenerator` + `JwtTokenGenerator`
 **Depende de:** TASK-03
 **Descrição:** interface `TokenGenerator` (`generate(User): GeneratedToken`)
 + `record GeneratedToken` em `application/port/`; implementação
