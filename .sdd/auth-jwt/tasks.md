@@ -175,7 +175,7 @@ casos lançam a mesma classe;
 usecase devolve o `User` + `GeneratedToken` para o controller montar o
 `LoginResponse`.
 
-### [ ] TASK-12 — `GetCurrentUserUseCase`
+### [x] TASK-12 — `GetCurrentUserUseCase`
 **Depende de:** TASK-06
 **Critério de aceite (teste unitário com mock):** `userId` existente →
 devolve o `User`; `userId` inexistente → lança (sem exceção de domínio
