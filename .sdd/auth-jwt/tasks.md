@@ -90,7 +90,7 @@ a mensagem; nenhuma classe importa framework.
 **Critério de aceite:** teste unitário `fromDomain(user).toDomain()` é
 igual ao `user` original, incluindo o conjunto de `roles` (round-trip).
 
-### [ ] TASK-06 — Port `UserRepository`
+### [x] TASK-06 — Port `UserRepository`
 **Depende de:** TASK-03
 **Descrição:** interface em `application/port/` (`findByEmail`,
 `findById`, `existsByEmail`, `save`) conforme seção 7 do plan.md.
