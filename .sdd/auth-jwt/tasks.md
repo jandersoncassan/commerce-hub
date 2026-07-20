@@ -163,7 +163,7 @@ verificar "role ignorado do payload": só que o resultado é sempre
 (d) senha persistida (`passwordHash` do `User` passado a `save`) é o
 retorno de `passwordHasher.hash(...)`, nunca a senha em texto puro.
 
-### [ ] TASK-11 — `LoginUseCase`
+### [x] TASK-11 — `LoginUseCase`
 **Depende de:** TASK-04, TASK-06, TASK-08, TASK-09
 **Critério de aceite (teste unitário com mocks):**
 (a) email inexistente (`findByEmail` vazio) → `InvalidCredentialsException`;
