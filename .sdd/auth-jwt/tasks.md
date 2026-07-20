@@ -81,7 +81,7 @@ a mensagem; nenhuma classe importa framework.
 
 ## Persistência
 
-### [ ] TASK-05 — Entidade JPA `UserEntity`
+### [x] TASK-05 — Entidade JPA `UserEntity`
 **Depende de:** TASK-02, TASK-03, TASK-04
 **Descrição:** `@Entity @Table("users")` em `adapter/persistence/`,
 `@ElementCollection` para `roles` (tabela `user_roles`),
