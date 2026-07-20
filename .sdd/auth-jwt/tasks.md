@@ -32,11 +32,15 @@ jar executável confirmado (`Main-Class`/`Start-Class` no manifest); subi
 `postgres` + `discovery-service` via Docker e rodei o jar localmente —
 Flyway criou o schema `auth` (sem migration ainda), `AUTH-SERVICE`
 apareceu `UP` em `http://localhost:8761/eureka/apps/AUTH-SERVICE`.
-**Não verificado ainda:** o boot **sem** `JWT_SECRET` subiu normalmente
-— nenhuma exceção. Isso é esperado nesta fase, não uma falha da task:
-nada no código ainda lê `${jwt.secret}` (`JwtTokenGenerator` só existe a
-partir da TASK-09). A metade "sem fallback" deste critério só passa a
-valer, de fato, quando a TASK-09 existir — reavaliar lá.
+**Reavaliado após TASK-09 (2026-07-20):** com `JwtTokenGenerator` agora
+existindo e lendo `${jwt.secret}` no construtor, refiz a verificação —
+subi `postgres` via Docker, rodei o jar (`--eureka.client.enabled=false`)
+**sem** `JWT_SECRET` no ambiente: boot falhou com exit code 1,
+`BeanCreationException` ao criar `jwtTokenGenerator`, causa raiz
+`IllegalArgumentException: Could not resolve placeholder 'JWT_SECRET' in
+value "${JWT_SECRET}"` — `ApplicationContext` nunca sobe. A metade "sem
+fallback" do critério de aceite agora passa de verdade, não só por
+ausência de código que a testasse. Container derrubado ao final.
 
 ### [x] TASK-02 — Migration V1: tabelas `users` e `user_roles`
 **Depende de:** TASK-01
