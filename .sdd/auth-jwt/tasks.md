@@ -149,7 +149,7 @@ dentro de um `assertThrows`.
 
 ## Usecases
 
-### [ ] TASK-10 — `RegisterUseCase`
+### [x] TASK-10 — `RegisterUseCase`
 **Depende de:** TASK-04, TASK-06, TASK-08
 **Critério de aceite (teste unitário com mocks dos ports):**
 (a) email é normalizado (`trim().toLowerCase()`) antes de
