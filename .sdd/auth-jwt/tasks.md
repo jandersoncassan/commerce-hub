@@ -115,7 +115,7 @@ condition apontada no plan.md.
 
 ## Segurança (ports + adapters)
 
-### [ ] TASK-08 — Port `PasswordHasher` + `BCryptPasswordHasher`
+### [x] TASK-08 — Port `PasswordHasher` + `BCryptPasswordHasher`
 **Depende de:** —
 **Descrição:** interface `PasswordHasher` (`hash`, `matches`) em
 `application/port/`; implementação `BCryptPasswordHasher` em
